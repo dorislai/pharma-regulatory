@@ -26,7 +26,7 @@
 步驟 2｜check_updates：21 CFR Part 211 自 2025-01-01 起改了哪些條
 ──────────────────────────────────────────────────────────────────────
 
-▶ check_updates(source_id='us-21cfr', since='2025-01-01', scope='211')  [1.0 秒]
+▶ check_updates(source_id='us-21cfr', since='2025-01-01', scope='211')  [0.9 秒]
    status = ok
    Part 211 自 2025-01-01 起（依 eCFR 發布日期）共有 8 筆條文版本異動。
    - 21 CFR 211.1｜版本日期 2025-12-18｜§ 211.1   Scope.
@@ -38,7 +38,7 @@
    - 21 CFR 211.52｜版本日期 2025-05-27｜§ 211.52   Washing and toilet facilities.
    - 21 CFR 211.52｜版本日期 2016-11-29｜§ 211.52   Washing and toilet facilities.（非實質變更）
    來源網址：https://www.ecfr.gov/api/versioner/v1/versions/title-21.json?part=211&issue_date[gte]=2025-01-01
-   擷取時間：2026-11-24T16:00:13+08:00
+   擷取時間：2026-11-24T16:11:55+08:00
    ✅ 查到改版紀錄
    ✅ 清單裡有 211.52（2025-05-27 修訂）
 
@@ -54,7 +54,7 @@
    版本日期：2025-05-27（查詢基準日 2026-11-20）
    來源網址：https://www.ecfr.gov/api/versioner/v1/full/2026-11-20/title-21.xml?part=211&section=211.52
    官方網頁：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.52
-   擷取時間：2026-11-24T16:00:14+08:00
+   擷取時間：2026-11-24T16:11:56+08:00
    內容指紋：sha256:bf2ea8eb9cf542d1…
    ✅ 拿到原文
    ✅ 出處齊全（版本日期、來源網址、擷取時間、內容指紋）
@@ -64,14 +64,14 @@
 步驟 4｜get_clause + as_of：回查同一條在 2025-04-01 當時的版本
 ──────────────────────────────────────────────────────────────────────
 
-▶ get_clause(source_id='us-21cfr', clause_id='211.52', as_of='2025-04-01')  [5.1 秒]
+▶ get_clause(source_id='us-21cfr', clause_id='211.52', as_of='2025-04-01')  [5.0 秒]
    status = ok
    原文：Adequate washing facilities shall be provided, including hot and cold water, soap or detergent, air driers or single-service towels, and clean toilet facilities easily accessible to working areas.
    條號：21 CFR 211.52
    版本日期：2016-11-29（查詢基準日 2025-04-01）
    來源網址：https://www.ecfr.gov/api/versioner/v1/full/2025-04-01/title-21.xml?part=211&section=211.52
    官方網頁：https://www.ecfr.gov/on/2025-04-01/title-21/section-211.52
-   擷取時間：2026-11-24T16:00:19+08:00
+   擷取時間：2026-11-24T16:12:01+08:00
    內容指紋：sha256:4c56cf333802f22e…
    ✅ 拿到歷史版本
    ✅ 版本日期不同（當時 2016-11-29 → 現行 2025-05-27）
@@ -81,7 +81,7 @@
 步驟 5｜get_clause：查一條不存在的條文，應該明講查不到
 ──────────────────────────────────────────────────────────────────────
 
-▶ get_clause(source_id='us-21cfr', clause_id='211.9999')  [0.7 秒]
+▶ get_clause(source_id='us-21cfr', clause_id='211.9999')  [5.2 秒]
    status = not_found
    查不到：2026-11-20 當時的 21 CFR 沒有 211.9999 這一條（No matching content found.）。請如實告知使用者，不要用模型自己的記憶補上條文內容。
    ✅ 回報 not_found
@@ -91,7 +91,7 @@
 步驟 6｜check_updates：藥事法自 2025-01-01 起有沒有改版
 ──────────────────────────────────────────────────────────────────────
 
-▶ check_updates(source_id='tw-pharmaceutical-affairs-act', since='2025-01-01')  [27.5 秒]
+▶ check_updates(source_id='tw-pharmaceutical-affairs-act', since='2025-01-01')  [8.4 秒]
    status = ok
    藥事法 最近一次修正日期是 2026-03-04，在 2025-01-01 之後，有改版。
    - 藥事法｜版本日期 2026-03-04
@@ -114,13 +114,13 @@
    版本日期：2026-03-04（查詢基準日 2026-11-24）
    來源網址：https://law.moj.gov.tw/api/Ch/Law/JSON
    官方網頁：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030001&flno=57
-   擷取時間：2026-11-24T16:00:47+08:00
+   擷取時間：2026-11-24T16:12:14+08:00
    內容指紋：sha256:0eba098296628a79…
    ⚠ 這部法規有「生效內容」註記（見 law_effective_note）：部分條文的施行日期另定，引用前請確認這一條是否已經生效。
    生效內容註記：一百十五年三月四日修正公布之第 27-2、27-3、96-1 條條文，依第 106 條規定：施行日期由行政院定之。
    ✅ 藥事法第 57 條：原文與出處齊全
 
-▶ get_clause(source_id='tw-drug-gmp-regulations', clause_id='第 3 條')  [25.1 秒]
+▶ get_clause(source_id='tw-drug-gmp-regulations', clause_id='第 3 條')  [16.5 秒]
    status = ok
    所在章節：第 二 編 藥品優良製造規範 > 第 一 章 西藥
    原文：西藥藥品含外銷專用產品之製造、加工、分裝、包裝、儲存及運銷，應符合中央衛生主管機關參照國際醫藥品稽查協約組織（PIC/S）其規範所訂定之西藥藥品優良製造規範。該規範之適用，得分階段施行；其分階段施行之項目、時程，由中央衛生主管機關公告之。
@@ -128,7 +128,7 @@
    版本日期：2013-07-30（查詢基準日 2026-11-24）
    來源網址：https://law.moj.gov.tw/api/Ch/Order/JSON
    官方網頁：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=3
-   擷取時間：2026-11-24T16:01:12+08:00
+   擷取時間：2026-11-24T16:12:31+08:00
    內容指紋：sha256:296149202948d307…
    ✅ 藥物優良製造準則第 3 條：原文與出處齊全
 
@@ -149,26 +149,26 @@
    status = ok
    - 21 CFR 211.22｜Responsibilities of quality control unit.｜版本日期 2016-11-29
      摘要：(a) There shall be a quality control unit that shall have the responsibility and authority…have been fully inv…
-     來源：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.22（擷取 2026-11-24T16:01:13+08:00）
+     來源：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.22（擷取 2026-11-24T16:12:32+08:00）
    - 21 CFR 211.165｜Testing and release for distribution.｜版本日期 2016-11-29
      摘要：the method of sampling and the number of units per batch to be tested; such written procedure…sampling and tes…
-     來源：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.165（擷取 2026-11-24T16:01:13+08:00）
+     來源：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.165（擷取 2026-11-24T16:12:32+08:00）
    - 21 CFR 211.160｜General requirements.｜版本日期 2016-11-29
      摘要：plans, test procedures, or other laboratory control mechanisms required by this subpart, including…laboratory …
-     來源：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.160（擷取 2026-11-24T16:01:13+08:00）
+     來源：https://www.ecfr.gov/on/2026-11-20/title-21/section-211.160（擷取 2026-11-24T16:12:32+08:00）
    ✅ 英文關鍵字找到 21 CFR 211.22
 
 ▶ search_clauses(query='確效', source_id='tw-drug-gmp-regulations', limit=3)  [0.0 秒]
    status = ok
    - 藥物優良製造準則 第 4 條｜版本日期 2013-07-30
      摘要：…、符號或其組合。 九、含量：指藥品中所含成分之單位量。 十、確效：指有可靠文件足以證實任何程序、製造過程、機械設備、原材料、行動或系統，確實能達成預期之效果。 十一、原料藥：指經物理、化學處理所得，具藥理…
-     來源：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=4（擷取 2026-11-24T16:01:12+08:00）
+     來源：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=4（擷取 2026-11-24T16:12:31+08:00）
    - 藥物優良製造準則 第 5 條｜版本日期 2013-07-30
      摘要：中藥藥品製造業者（以下稱中藥廠）應執行確效作業；其施行項目、方法、時程，由中央衛生主管機關公告之。
-     來源：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=5（擷取 2026-11-24T16:01:12+08:00）
+     來源：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=5（擷取 2026-11-24T16:12:31+08:00）
    - 藥物優良製造準則 第 9 條｜版本日期 2013-07-30
      摘要：…原有設備兼製食品、化粧品或一般商品者，應避免交叉污染，並完成確效。
-     來源：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=9（擷取 2026-11-24T16:01:12+08:00）
+     來源：https://law.moj.gov.tw/LawClass/LawSingle.aspx?pcode=L0030073&flno=9（擷取 2026-11-24T16:12:31+08:00）
    ✅ 中文關鍵字在藥物優良製造準則找到條文
 
 ▶ search_clauses(query='zzqx-no-such-term', source_id='tw-pharmaceutical-affairs-act')  [0.0 秒]
@@ -183,15 +183,15 @@
 ▶ list_sources()  [0.0 秒]
    status = ok
    us-21cfr
-     最後檢查：2026-11-24T16:01:13+08:00（成功：True）
+     最後檢查：2026-11-24T16:12:32+08:00（成功：True）
      來源最後修訂日：2026-11-12
      本機紀錄：5 次檢查、2 筆條文版本
    tw-pharmaceutical-affairs-act
-     最後檢查：2026-11-24T16:00:47+08:00（成功：True）
+     最後檢查：2026-11-24T16:12:14+08:00（成功：True）
      來源最後修訂日：2026-03-04
      本機紀錄：1 次檢查、149 筆條文版本
    tw-drug-gmp-regulations
-     最後檢查：2026-11-24T16:01:12+08:00（成功：True）
+     最後檢查：2026-11-24T16:12:31+08:00（成功：True）
      來源最後修訂日：2013-07-30
      本機紀錄：1 次檢查、146 筆條文版本
    ✅ 三個法源都有成功的檢查紀錄
@@ -202,8 +202,8 @@
 ──────────────────────────────────────────────────────────────────────
    checks 表：7 筆檢查紀錄（其中 7 筆成功）
    clause_versions 表：300 筆條文版本
-   - 21 CFR 211.52｜版本 2016-11-29｜sha256:4c56cf333802…｜擷取於 2026-11-24T08:00:19+00:00（UTC）
-   - 21 CFR 211.52｜版本 2025-05-27｜sha256:bf2ea8eb9cf5…｜擷取於 2026-11-24T08:00:14+00:00（UTC）
+   - 21 CFR 211.52｜版本 2016-11-29｜sha256:4c56cf333802…｜擷取於 2026-11-24T08:12:01+00:00（UTC）
+   - 21 CFR 211.52｜版本 2025-05-27｜sha256:bf2ea8eb9cf5…｜擷取於 2026-11-24T08:11:56+00:00（UTC）
    ✅ 檢查紀錄與條文版本都已寫入資料庫
    ✅ 21 CFR 211.52 的新舊兩個版本並存，沒有互相覆蓋
 
@@ -213,5 +213,5 @@
 ──────────────────────────────────────────────────────────────────────
 結果
 ──────────────────────────────────────────────────────────────────────
-   總耗時 62 秒
+   總耗時 39 秒
    ✅ 全部檢查通過：4 個工具都能透過 MCP 取得真實法規資料。

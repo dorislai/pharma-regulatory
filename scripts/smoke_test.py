@@ -30,6 +30,7 @@ EXPECTED_TOOLS = {"list_sources", "check_updates", "get_clause", "search_clauses
 US = "us-21cfr"
 ACT = "tw-pharmaceutical-affairs-act"
 GMP = "tw-drug-gmp-regulations"
+RETRY_WAIT_SECONDS = 20  # 官方來源暫時連不上時，等這麼久再試一次
 
 failures: list[str] = []
 
@@ -51,6 +52,9 @@ def shorten(text: str, limit: int = 110) -> str:
 
 
 def show_provenance(result: dict[str, Any]) -> None:
+    if "text" not in result:
+        print(f"   （沒有條文內容）{result.get('message', '')}")
+        return
     p = result["provenance"]
     print(f"   條號：{result['citation']}")
     print(f"   版本日期：{p['version_date']}（查詢基準日 {p['as_of']}）")
@@ -66,14 +70,29 @@ def has_provenance(result: dict[str, Any]) -> bool:
 
 
 async def call(session: ClientSession, name: str, **arguments: Any) -> dict[str, Any]:
-    """透過 MCP 呼叫一個工具，回傳它給的 JSON。"""
+    """透過 MCP 呼叫一個工具，回傳它給的 JSON。
+
+    官方網站偶爾會暫時出錯。遇到「連不上來源」時等一下再試一次，
+    兩次的結果都會印出來，不會把失敗藏起來。
+    """
+    payload = await call_once(session, name, arguments)
+    if payload["status"] == "source_unavailable":
+        reason = payload.get("error") or payload.get("message")
+        print(f"   ⏳ 官方來源暫時連不上（{reason}）")
+        print(f"      server 已如實回報，沒有給任何內容。{RETRY_WAIT_SECONDS} 秒後重試一次…")
+        await asyncio.sleep(RETRY_WAIT_SECONDS)
+        payload = await call_once(session, name, arguments)
+    return payload
+
+
+async def call_once(session: ClientSession, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     started = time.monotonic()
     result = await session.call_tool(name, arguments)
     elapsed = time.monotonic() - started
     shown = ", ".join(f"{k}={v!r}" for k, v in arguments.items())
     print(f"\n▶ {name}({shown})  [{elapsed:.1f} 秒]")
     if result.isError:
-        raise RuntimeError(f"工具 {name} 回報協定層錯誤：{result.content}")
+        raise RuntimeError(f"工具 {name} 回報協定層錯誤")
     payload = json.loads(result.content[0].text)
     print(f"   status = {payload['status']}")
     return payload
@@ -110,75 +129,85 @@ async def exercise(session: ClientSession) -> None:
     title("步驟 2｜check_updates：21 CFR Part 211 自 2025-01-01 起改了哪些條")
     updates = await call(session, "check_updates", source_id=US, since="2025-01-01", scope="211")
     print(f"   {updates['message']}")
-    for item in updates["items"]:
+    for item in updates.get("items", []):
         mark = "" if item["substantive"] else "（非實質變更）"
         print(f"   - {item['citation']}｜版本日期 {item['version_date']}｜{shorten(item['name'], 50)}{mark}")
-    print(f"   來源網址：{updates['provenance']['source_url']}")
-    print(f"   擷取時間：{updates['provenance']['retrieved_at']}")
-    check(updates["status"] == "ok" and updates["has_updates"], "查到改版紀錄")
-    check(any(i["clause_id"] == "211.52" for i in updates["items"]), "清單裡有 211.52（2025-05-27 修訂）")
+    if updates["status"] == "ok":
+        print(f"   來源網址：{updates['provenance']['source_url']}")
+        print(f"   擷取時間：{updates['provenance']['retrieved_at']}")
+    check(updates["status"] == "ok" and updates.get("has_updates") is True, "查到改版紀錄")
+    check(any(i["clause_id"] == "211.52" for i in updates.get("items", [])), "清單裡有 211.52（2025-05-27 修訂）")
 
     title("步驟 3｜get_clause：取得 21 CFR 211.52 的現行原文")
     current = await call(session, "get_clause", source_id=US, clause_id="211.52")
-    print(f"   標題：{current['heading']}")
-    print(f"   原文：{current['text']}")
+    if "text" in current:
+        print(f"   標題：{current['heading']}")
+        print(f"   原文：{current['text']}")
     show_provenance(current)
-    check(current["status"] == "ok" and bool(current["text"]), "拿到原文")
+    check(current["status"] == "ok" and bool(current.get("text")), "拿到原文")
     check(has_provenance(current), "出處齊全（版本日期、來源網址、擷取時間、內容指紋）")
-    check(current["freshness"]["confirmed"] is True, "已向來源確認是最新版")
+    check(current.get("freshness", {}).get("confirmed") is True, "已向來源確認是最新版")
 
     title("步驟 4｜get_clause + as_of：回查同一條在 2025-04-01 當時的版本")
     past = await call(session, "get_clause", source_id=US, clause_id="211.52", as_of="2025-04-01")
-    print(f"   原文：{past['text']}")
+    if "text" in past:
+        print(f"   原文：{past['text']}")
     show_provenance(past)
     check(past["status"] == "ok", "拿到歷史版本")
-    check(
-        past["provenance"]["version_date"] < current["provenance"]["version_date"],
-        f"版本日期不同（當時 {past['provenance']['version_date']} → 現行 {current['provenance']['version_date']}）",
-    )
-    check(
-        past["provenance"]["checksum"] != current["provenance"]["checksum"],
-        "內容指紋不同：兩個版本的文字確實有差異",
-    )
+    if has_provenance(past) and has_provenance(current):
+        check(
+            past["provenance"]["version_date"] < current["provenance"]["version_date"],
+            f"版本日期不同（當時 {past['provenance']['version_date']} → 現行 {current['provenance']['version_date']}）",
+        )
+        check(
+            past["provenance"]["checksum"] != current["provenance"]["checksum"],
+            "內容指紋不同：兩個版本的文字確實有差異",
+        )
+    else:
+        check(False, "兩個版本都要拿到，才能比較版本日期與內容指紋")
 
     title("步驟 5｜get_clause：查一條不存在的條文，應該明講查不到")
     missing = await call(session, "get_clause", source_id=US, clause_id="211.9999")
-    print(f"   {missing['message']}")
+    print(f"   {missing.get('message', '')}")
     check(missing["status"] == "not_found", "回報 not_found")
     check("text" not in missing, "沒有附上任何條文內容")
 
     title("步驟 6｜check_updates：藥事法自 2025-01-01 起有沒有改版")
     tw_updates = await call(session, "check_updates", source_id=ACT, since="2025-01-01")
     print(f"   {tw_updates['message']}")
-    for item in tw_updates["items"]:
+    tw_items = tw_updates.get("items", [])
+    for item in tw_items:
         print(f"   - {item['citation']}｜版本日期 {item['version_date']}")
         print(f"     官方沿革：{item.get('amendment_note')}")
-    print(f"   逐條明細：{tw_updates['clause_level_detail']}")
-    print(f"   來源網址：{tw_updates['provenance']['source_url']}")
-    print(f"   整包資料更新日：{tw_updates['provenance']['bulk_data_updated_on']}")
+    if tw_updates["status"] == "ok":
+        print(f"   逐條明細：{tw_updates['clause_level_detail']}")
+        print(f"   來源網址：{tw_updates['provenance']['source_url']}")
+        print(f"   整包資料更新日：{tw_updates['provenance']['bulk_data_updated_on']}")
     check(tw_updates["status"] == "ok", "查詢成功")
-    check(tw_updates["has_updates"] and bool(tw_updates["items"][0]["amendment_note"]), "查到改版，並附官方沿革原文")
+    check(bool(tw_items) and bool(tw_items[0].get("amendment_note")), "查到改版，並附官方沿革原文")
 
     title("步驟 7｜get_clause：藥事法第 57 條、藥物優良製造準則第 3 條")
     article_57 = await call(session, "get_clause", source_id=ACT, clause_id="57")
-    print(f"   所在章節：{article_57['heading']}")
-    print(f"   原文：{shorten(article_57['text'], 200)}")
+    if "text" in article_57:
+        print(f"   所在章節：{article_57['heading']}")
+        print(f"   原文：{shorten(article_57['text'], 200)}")
     show_provenance(article_57)
-    for warning in article_57["warnings"]:
+    for warning in article_57.get("warnings", []):
         print(f"   ⚠ {warning}")
     if article_57.get("law_effective_note"):
         print(f"   生效內容註記：{article_57['law_effective_note']}")
     check(article_57["status"] == "ok" and has_provenance(article_57), "藥事法第 57 條：原文與出處齊全")
 
     gmp_3 = await call(session, "get_clause", source_id=GMP, clause_id="第 3 條")
-    print(f"   所在章節：{gmp_3['heading']}")
-    print(f"   原文：{shorten(gmp_3['text'], 200)}")
+    if "text" in gmp_3:
+        print(f"   所在章節：{gmp_3['heading']}")
+        print(f"   原文：{shorten(gmp_3['text'], 200)}")
     show_provenance(gmp_3)
     check(gmp_3["status"] == "ok" and has_provenance(gmp_3), "藥物優良製造準則第 3 條：原文與出處齊全")
 
     title("步驟 8｜get_clause + as_of：台灣法規只有現行版，回查舊日期應該明講查不到")
     too_early = await call(session, "get_clause", source_id=ACT, clause_id="57", as_of="2020-01-01")
-    print(f"   {too_early['message']}")
+    print(f"   {too_early.get('message', '')}")
     check(too_early["status"] == "not_found" and "text" not in too_early, "回報 not_found，沒有拿現行版充數")
 
     title("步驟 9｜search_clauses：關鍵字檢索")
@@ -197,6 +226,8 @@ async def exercise(session: ClientSession) -> None:
         print(f"   - {hit['citation']}｜版本日期 {hit['version_date']}")
         print(f"     摘要：{shorten(hit['excerpt'])}")
         print(f"     來源：{hit['web_url']}（擷取 {hit['retrieved_at']}）")
+    if found_tw["status"] != "ok":
+        print(f"   {found_tw['message']}")
     check(found_tw["status"] == "ok" and len(found_tw["results"]) > 0, "中文關鍵字在藥物優良製造準則找到條文")
 
     nothing = await call(session, "search_clauses", query="zzqx-no-such-term", source_id=ACT)
@@ -241,12 +272,25 @@ def inspect_database(home: Path) -> None:
     print(f"   完整的連線紀錄：{home / 'server.log'}")
 
 
+def describe_error(exc: BaseException) -> str:
+    """把錯誤整理成一句話（非同步程式的錯誤可能是好幾個包在一起）。"""
+    inner = getattr(exc, "exceptions", None)
+    if inner:
+        return "；".join(describe_error(e) for e in inner)
+    return f"{type(exc).__name__}: {exc}"
+
+
 def main() -> int:
     home = Path(tempfile.mkdtemp(prefix="pharma-reg-mcp-smoke-"))
     print(f"本次測試使用的暫存資料夾：{home}")
     started = time.monotonic()
-    asyncio.run(run(home))
-    inspect_database(home)
+    try:
+        asyncio.run(run(home))
+        inspect_database(home)
+    except KeyboardInterrupt:
+        raise
+    except BaseException as exc:  # 也涵蓋非同步程式包起來的「一組錯誤」
+        failures.append(f"測試中斷：{describe_error(exc)}")
     title("結果")
     print(f"   總耗時 {time.monotonic() - started:.0f} 秒")
     if failures:
