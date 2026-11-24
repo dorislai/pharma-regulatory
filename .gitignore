@@ -1,0 +1,22 @@
+# Python 執行時產生的暫存檔
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# uv 建立的獨立環境（別人下載專案後用 `uv sync` 自己重建即可）
+.venv/
+
+# 本機法規資料庫與下載暫存（屬於執行結果，不屬於原始碼）
+data/
+*.db
+*.db-journal
+*.zip
+
+# 作業系統與編輯器雜檔
+.DS_Store
+.idea/
+.vscode/
+
+# 任何金鑰設定都不該進版本庫（本專案目前不需要任何金鑰）
+.env
