@@ -3,6 +3,9 @@ name = "pharma-reg-mcp"
 version = "0.1.0"
 description = "法規查詢 MCP：用固定程式抓取官方公開法規（美國 eCFR Title 21、台灣全國法規資料庫），每筆回傳都帶出處與版本紀錄的最小原型"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Doris Lai" }]
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.9,<2",   # 官方 MCP SDK（內含 FastMCP）
