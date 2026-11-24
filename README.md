@@ -1,1 +1,1 @@
-# pharma-regualtory
+# pharma-regulatory
